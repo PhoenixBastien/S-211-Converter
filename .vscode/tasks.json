@@ -1,0 +1,23 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "build",
+            "type": "shell",
+            "command": ".venv/Scripts/pyinstaller.exe",
+            "args": [
+                "-Fw",
+                "-n",
+                "S211 Converter",
+                "-i",
+                "icon.ico",
+                "--add-data",
+                "icon.ico:.",
+                "app.py"
+            ],
+            "problemMatcher": [
+                "$python"
+            ]
+        }
+    ]
+}
