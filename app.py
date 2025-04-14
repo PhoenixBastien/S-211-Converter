@@ -10,7 +10,6 @@ from urllib.parse import urlparse, urlencode, parse_qs
  
 import chardet
 import pandas as pd
-# import pymarc
  
 # global dict of each field name and its corresponding tag number
 field_dict = {
