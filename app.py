@@ -1,14 +1,16 @@
+import os
 import re
 import sys
 import xml.etree.ElementTree as ET
 from collections import defaultdict
 from datetime import datetime
 from pathlib import Path
-from tkinter import Tk, IntVar, StringVar, filedialog, ttk
-from urllib.parse import urlparse, parse_qs, quote_plus
+from tkinter import IntVar, Text, Tk, filedialog, ttk
+from urllib.parse import urlparse, urlencode, parse_qs
  
 import chardet
 import pandas as pd
+# import pymarc
  
 # global dict of each field name and its corresponding tag number
 field_dict = {
@@ -34,7 +36,7 @@ tag_dict = {
     for field_name in field_dict
 }
  
-def xml_to_csv(xml_path: Path | str) -> None:
+def xml_to_csv(xml_path: Path | str) -> Path:
     '''Convert xml file to csv'''
  
     # parse xml file into element tree and get root element of tree
@@ -76,21 +78,32 @@ def xml_to_csv(xml_path: Path | str) -> None:
             # skip to next iteration if field is unknown
             if tag not in field_dict.values():
                 continue
-           
+
             if tag == '260': # Publication, Distrbution
-                # get text of subfields and use empty string if empty
+                # get publication and distribution and use empty string if empty
                 publication = (subfields[0].text or '').strip()
                 distribution = (subfields[1].text or '').strip()
+
                 # join publication and distribution separated by newline
-                text = f'{publication}\n{distribution}'.strip()
-            elif tag == '710': # Corporate Name
-                # get text of subfield and replace '|' with newlines and use empty string if empty
-                text = (subfields[0].text or '').strip().replace('|', '\n')
+                text = f'{publication}\n{distribution}'
+            elif tag == '710' or tag == '110': # Corporate Name or Main Entry Corporate Name
+                # get corporate name and use empty string if empty
+                corporate_name = (subfields[0].text or '').strip()
+                text = corporate_name
+
+                # join corporate name and relator separated by newline if latter exists
+                if len(subfields) == 2:
+                    relator = (subfields[1].text or '').strip()
+                    text = f'{corporate_name}\n{relator}'
             elif tag == '856': # URL
                 # get link location and display text
                 link_location = subfields[0].text.strip()
-                display_text = quote_plus(subfields[1].text.strip())
-                text = f'{link_location}?display_text={display_text}'
+                display_text = subfields[1].text.strip()
+
+                # join link location and display text in a url
+                url = urlparse(link_location)
+                query = urlencode({'display_text': display_text})
+                text = url._replace(query=query).geturl()
             else:
                 # get text of subfield and use empty string if empty
                 text = (subfields[0].text or '').strip()
@@ -106,12 +119,12 @@ def xml_to_csv(xml_path: Path | str) -> None:
     df = pd.DataFrame(data).fillna('').map(lambda x: '\n\n'.join(x))
  
     # write dataframe to csv file with signed utf-8 encoding to avoid any errors
-    csv_path = Path.home() / 'Downloads' / f'{Path(xml_path).stem}.csv'
+    csv_path = Path.home() / 'Downloads' / Path(xml_path).with_suffix('.csv')
     df.to_csv(csv_path, index=False, encoding='utf-8-sig')
+    print(f'XML converted to CSV at {csv_path.as_posix()}')
     return csv_path
-    # print(f'xml converted to csv at {csv_path}')
  
-def csv_to_xml(csv_path: Path | str) -> None:
+def csv_to_xml(csv_path: Path | str) -> Path:
     '''Convert csv file to xml'''
  
     # detect encoding of csv file
@@ -140,12 +153,12 @@ def csv_to_xml(csv_path: Path | str) -> None:
                 # skip iteration if string is empty
                 if not text:
                     continue
-                   
-                if field_name.lower() == 'leader': # leader
+
+                if field_name.lower() == 'leader':
                     # define leader as subelement of record and set its text
                     leader = ET.SubElement(record, 'leader')
                     leader.text = text.strip()
-                elif field_name.startswith('controlfield'): # controlfield
+                elif field_name.startswith('controlfield'):
                     # get controlfield tag number
                     tag = field_name.replace('controlfield', '').strip()
  
@@ -168,58 +181,66 @@ def csv_to_xml(csv_path: Path | str) -> None:
                     # get datafield tag number and define datafield as subelement of record with its corresponding tag number as an attribute
                     tag = field_dict[field_name]
                     datafield = ET.SubElement(record, 'datafield', tag=tag)
- 
+
                     if tag == '260': # Publication, Distrbution
-                        # define first and second subfields as subelements of datafield with codes 'a' and 'b' respectively
-                        subfield1 = ET.SubElement(datafield, 'subfield', code='a')
-                        subfield2 = ET.SubElement(datafield, 'subfield', code='b')
+                        # define publication and distribution as subfields of datafield with codes 'a' and 'b' respectively
+                        subfield_a = ET.SubElement(datafield, 'subfield', code='a')
+                        subfield_b = ET.SubElement(datafield, 'subfield', code='b')
  
-                        # split text by newline and set text of first subfield
+                        # split text by newline and set text of publication subfield
                         split_text = text.strip().split('\n')
-                        subfield1.text = split_text[0].strip()
+                        subfield_a.text = split_text[0].strip()
  
+                        # set text of distribution subfield if it exists
+                        if len(split_text) == 2:
+                            subfield_b.text = split_text[1].strip()
+                    elif tag == '710' or tag == '110': # Corporate Name or Main Entry Corporate Name
+                        # define corporate name and relator as subfields of datafield with codes 'a' and 'e' respectively
+                        subfield_a = ET.SubElement(datafield, 'subfield', code='a')
+                        subfield_e = ET.SubElement(datafield, 'subfield', code='e')
+
+                        # split text by newline and set text of corporate name subfield
+                        split_text = text.strip().split('\n')
+                        subfield_a.text = split_text[0].strip()
+
                         # set text of second subfield if it exists
                         if len(split_text) == 2:
-                            subfield2.text = split_text[1].strip()
-                    elif tag == '710': # Corporate Name
-                        # define subfield as subelement of datafield with code 'a' and set its text with newlines replaced with '|'
-                        subfield = ET.SubElement(datafield, 'subfield', code='a')
-                        subfield.text = text.strip().replace('\n', '|').strip()
+                            subfield_e.text = split_text[1].strip()
                     elif tag == '856': # URL
-                        # define first (link location) and second subfields (display text) as subelements of datafield with with codes 'u' and 'y' respectively
-                        subfield1 = ET.SubElement(datafield, 'subfield', code='u')
-                        subfield2 = ET.SubElement(datafield, 'subfield', code='y')
+                        # define link location and display text as subfields of datafield with with codes 'u' and 'y' respectively
+                        subfield_u = ET.SubElement(datafield, 'subfield', code='u')
+                        subfield_y = ET.SubElement(datafield, 'subfield', code='y')
  
                         # parse url and query
-                        parsed_url = urlparse(text)
-                        parsed_query = parse_qs(parsed_url.query)
+                        url = urlparse(text)
+                        query = parse_qs(url.query)
  
-                        # get link location from parsed url without query
-                        link_location = parsed_url._replace(query='').geturl()
+                        # get link location from parsed url with query removed
+                        link_location = url._replace(query='').geturl()
  
                         # get display text from parsed query if it exists or default to 'Online access'
-                        if 'display_text' in parsed_query:
-                            display_text = parsed_query['display_text'][0]
-                        else:
-                            display_text = 'Online access'
+                        display_text = query['display_text'][0] \
+                            if 'display_text' in query else 'Online access'
  
-                        # set text of subfields
-                        subfield1.text = link_location.strip()
-                        subfield2.text = display_text.strip()
+                        # set text of link location and display text subfields
+                        subfield_u.text = link_location.strip()
+                        subfield_y.text = display_text.strip()
                     else:
-                        # define subfield as subelement of datafield with default code 'a' and its text
-                        subfield = ET.SubElement(datafield, 'subfield', code='a')
-                        subfield.text = text.strip()
+                        # define subfield of datafield with default code 'a' and set its text
+                        subfield_a = ET.SubElement(datafield, 'subfield', code='a')
+                        subfield_a.text = text.strip()
  
     # write tree to xml file
     ET.indent(tree, space='    ')
-    xml_path = Path.home() / 'Downloads' / f'{Path(csv_path).stem}.xml'
+    xml_path = Path.home() / 'Downloads' / Path(csv_path).with_suffix('.xml')
     tree.write(xml_path, encoding='utf-8', xml_declaration=True)
+    print(f'CSV converted to XML at {xml_path.as_posix()}')
     return xml_path
-    # print(f'csv converted to xml at {xml_path}')
  
-def select(radio: IntVar, string: StringVar) -> None:
+def select(radio: IntVar, text: Text) -> None:
     '''Select and convert files from one format to another'''
+
+    text.config(state='normal')
  
     if radio.get() == 0:
         # prompt user to select xml files to convert to csv
@@ -228,10 +249,10 @@ def select(radio: IntVar, string: StringVar) -> None:
             title='Select XML files to convert to CSV'
         )
  
-        # convert selected xml files to csv
+        # convert selected xml files to csv and display output path in text box
         for xml_file in xml_files:
             csv_path = xml_to_csv(Path(xml_file.name))
-            string.set(f'{string.get()}\nXML converted to CSV at {csv_path}')
+            text.insert('end', f'XML converted to CSV at {csv_path.as_posix()}\n')
     else:
         # prompt user to select csv files to convert to xml
         csv_files = filedialog.askopenfiles(
@@ -239,18 +260,20 @@ def select(radio: IntVar, string: StringVar) -> None:
             title='Select CSV files to convert to XML'
         )
  
-        # convert selected csv files to xml
+        # convert selected csv files to xml and display output path in text box
         for csv_file in csv_files:
             xml_path = csv_to_xml(Path(csv_file.name))
-            string.set(f'{string.get()}\nCSV converted to XML at {xml_path}')
+            text.insert('end', f'CSV converted to XML at {xml_path.as_posix()}\n')
+    
+    text.config(state='disabled')
  
 def gui() -> None:
     '''Create GUI for end user'''
  
     # create window and apply style
     root = Tk()
-    root.geometry('700x500')
-    # root.resizable(False, False)
+    root.geometry('650x400')
+    root.resizable(width=False, height=False)
     root.title('S211 Converter')
  
     if getattr(sys, 'frozen', False) and hasattr(sys, '_MEIPASS'):
@@ -266,18 +289,27 @@ def gui() -> None:
  
     # create variable to track selection of radio buttons for conversion type
     radio = IntVar()
-    ttk.Label(root, text='Select conversion type:').pack()
-    ttk.Radiobutton(root, text='XML to CSV', variable=radio, value=0).pack()
-    ttk.Radiobutton(root, text='CSV to XML', variable=radio, value=1).pack()
-   
-    # create variable to track output text
-    string = StringVar()
+    radios = ttk.Frame(root)
+    radios.pack(pady=5)
+    ttk.Label(radios, text='Select conversion type:').pack(padx=5, side='left')
+    ttk.Radiobutton(radios, text='XML to CSV',
+                    variable=radio, value=0).pack(padx=5, side='left')
+    ttk.Radiobutton(radios, text='CSV to XML',
+                    variable=radio, value=1).pack(padx=5)
+
+    text = Text(root, font='TkDefaultFont', width=100, height=20,
+                   padx=5, pady=5, state='disabled')
  
     # create button to select files to convert based on selected conversion type
-    ttk.Button(root, text='Select files', command=lambda: select(radio, string)).pack()
- 
-    # create label to display output text
-    ttk.Label(root, textvariable=string).pack()
+    buttons = ttk.Frame(root)
+    buttons.pack()
+    ttk.Button(buttons, text='Select files to convert',
+               command=lambda: select(radio, text)).pack(side='left')
+    ttk.Button(buttons, text='Open downloads folder',
+               command=lambda: os.startfile(Path.home() / 'Downloads')).pack()
+    
+    # create text box to display output text
+    text.pack(padx=15, pady=15)
  
     # run the window
     root.mainloop()
