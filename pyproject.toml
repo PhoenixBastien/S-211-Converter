@@ -1,0 +1,30 @@
+[build-system]
+requires = ["setuptools >= 77.0.3"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "S211-Converter"
+version = "2.0.1"
+authors = [
+    {name = "Phoenix Bastien", email = "phoenixbastien@gmail.com"},
+]
+description = "Graphical app to convert S211 MARC records between XML and CSV"
+readme = "README.md"
+requires-python = ">=3.12"
+license = "MIT"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Operating System :: Microsoft :: Windows"
+]
+dependencies = [
+    "chardet",
+    "pandas",
+    "pyinstaller"
+]
+
+[project.urls]
+Repository = "https://github.com/PhoenixBastien/S211-Converter"
+Issues = "https://github.com/PhoenixBastien/S211-Converter/issues"
+
+[project.gui-scripts]
+main = "app:main"
