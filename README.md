@@ -19,7 +19,7 @@ In Visual Studio Code, press <kbd>Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>B</kbd> t
 Alternatively, the application can be built in the terminal by running the command:
 
 ```sh
-pyinstaller --onefile --windowed --name="S211 Converter" --icon=img/icon.ico --add-data=img/icon.ico:. app.py
+pyinstaller --onefile --windowed --name="S211 Converter" --icon=icon.ico --add-data=icon.ico:. app.py
 ```
 
 As with the Visual Studio Code method, the application will be found in the `dist` directory.
