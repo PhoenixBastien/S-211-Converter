@@ -4,9 +4,9 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "S211-Converter"
-version = "2025.4.2"
+version = "2025.5.0"
 authors = [
-    {name = "Phoenix Bastien", email = "phoenixbastien@gmail.com"},
+    {name = "Phoenix Bastien", email = "phoenixbastien@gmail.com"}
 ]
 description = "Graphical app to convert S211 MARC records between XML and CSV"
 readme = "README.md"
@@ -17,9 +17,9 @@ classifiers = [
     "Operating System :: Microsoft :: Windows"
 ]
 dependencies = [
-    "chardet",
-    "pandas",
-    "pyinstaller"
+    "chardet==5.2.0",
+    "pandas==2.2.3",
+    "pyinstaller==6.12.0"
 ]
 
 [project.urls]
