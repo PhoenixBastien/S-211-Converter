@@ -1,1 +1,0 @@
-pyinstaller -Fw -n "S211 Converter" -i icon.ico --add-data icon.ico:. app.py
