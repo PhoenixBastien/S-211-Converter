@@ -45,7 +45,7 @@ In Visual Studio Code, press <kbd>Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>B</kbd> t
 
 From the project root directory, build the application by running in PowerShell:
 
-```sh
+```powershell
 pyinstaller --onefile --windowed --name="S211 Converter" --icon=icon.ico --add-data=icon.ico:. app.py
 ```
 
