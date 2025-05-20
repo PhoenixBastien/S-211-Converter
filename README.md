@@ -1,22 +1,4 @@
-Metadata-Version: 2.4
-Name: S211-Converter
-Version: 2025.5.0
-Summary: Graphical app to convert S211 MARC records between XML and CSV
-Author-email: Phoenix Bastien <phoenixbastien@gmail.com>
-License-Expression: MIT
-Project-URL: Repository, https://github.com/PhoenixBastien/S211-Converter
-Project-URL: Issues, https://github.com/PhoenixBastien/S211-Converter/issues
-Classifier: Programming Language :: Python :: 3
-Classifier: Operating System :: Microsoft :: Windows
-Requires-Python: >=3.12
-Description-Content-Type: text/markdown
-License-File: LICENSE
-Requires-Dist: chardet==5.2.0
-Requires-Dist: pandas==2.2.3
-Requires-Dist: pyinstaller==6.12.0
-Dynamic: license-file
-
-![App Icon](icon.png)
+![App Icon](icon.ico)
 
 # S211 Converter
 
