@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "S211-Converter"
-version = "2025.5.0"
+version = "2025.5.1"
 authors = [
     {name = "Phoenix Bastien", email = "phoenixbastien@gmail.com"}
 ]
