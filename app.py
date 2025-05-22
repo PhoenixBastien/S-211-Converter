@@ -277,7 +277,7 @@ def gui() -> None:
     # create window and apply style
     root = Tk()
     root.geometry('650x400')
-    root.minsize(325, 200)
+    root.minsize(350, 200)
     root.title('S211 Converter')
 
     # check if python script is running in a pyinstaller bundle
