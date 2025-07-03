@@ -27,7 +27,7 @@ Then, install the package dependencies by running:
 pip install .
 ```
 
-Alternatively, the package dependencies can be installed from a local flat directory called `wheels` containing archives by replacing the third line with:
+Alternatively, the package dependencies can be installed from a local flat directory called `wheels` containing archives by replacing the previous line with:
 
 ```powershell
 pip install --no-index --find-links=wheels .
