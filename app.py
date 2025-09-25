@@ -121,7 +121,7 @@ def xml_to_csv(xml_path: Path | str) -> Path:
     # write dataframe to csv file with signed utf-8 encoding to avoid any errors
     csv_path = Path.home() / 'Downloads' / f'{Path(xml_path).stem}.csv'
     df.to_csv(csv_path, index=False, encoding='utf-8-sig')
-    print(f'XML converted to CSV at {csv_path}')
+    print(f'MARCXML converted to CSV at {csv_path}')
     return csv_path
 
 
@@ -240,7 +240,7 @@ def csv_to_xml(csv_path: Path | str) -> Path:
     ET.indent(tree, space='    ')
     xml_path = Path.home() / 'Downloads' / f'{Path(csv_path).stem}.xml'
     tree.write(xml_path, encoding='utf-8', xml_declaration=True)
-    print(f'CSV converted to XML at {xml_path}')
+    print(f'CSV converted to MARCXML at {xml_path}')
     return xml_path
 
 
@@ -254,24 +254,24 @@ def select_files(bit: IntVar, text_box: Text) -> None:
         # prompt user to select xml files to convert to csv
         xml_files = filedialog.askopenfiles(
             filetypes=[('XML File', '.xml')],
-            title='Select XML Files to Convert to CSV'
+            title='Select MARCXML Files to Convert to CSV'
         )
 
         # convert selected xml files to csv and display output path in text box
         for xml_file in xml_files:
             csv_path = xml_to_csv(Path(xml_file.name))
-            text_box.insert('end', f'XML Converted to CSV at {csv_path}\n')
+            text_box.insert('end', f'MARCXML Converted to CSV at {csv_path}\n')
     else:
         # prompt user to select csv files to convert to xml
         csv_files = filedialog.askopenfiles(
             filetypes=[('CSV File', '.csv')],
-            title='Select CSV Files to Convert to XML'
+            title='Select CSV Files to Convert to MARCXML'
         )
 
         # convert selected csv files to xml and display output path in text box
         for csv_file in csv_files:
             xml_path = csv_to_xml(Path(csv_file.name))
-            text_box.insert('end', f'CSV Converted to XML at {xml_path}\n')
+            text_box.insert('end', f'CSV Converted to MARCXML at {xml_path}\n')
 
     # make text box uneditable
     text_box.config(state='disabled')
@@ -284,7 +284,7 @@ def gui() -> None:
     root = Tk()
     root.geometry('650x400')
     root.minsize(350, 200)
-    root.title('S211 Converter')
+    root.title('S-211 Converter')
 
     # check if python script is running in a pyinstaller bundle
     if getattr(sys, 'frozen', False) and hasattr(sys, '_MEIPASS'):
@@ -300,8 +300,8 @@ def gui() -> None:
     radios = ttk.Frame(root)
     l = ttk.Label(radios, text='Select Conversion Type:')
     bit = IntVar()
-    r1 = ttk.Radiobutton(radios, text='XML to CSV', variable=bit, value=0)
-    r2 = ttk.Radiobutton(radios, text='CSV to XML', variable=bit, value=1)
+    r1 = ttk.Radiobutton(radios, text='MARCXML to CSV', variable=bit, value=0)
+    r2 = ttk.Radiobutton(radios, text='CSV to MARCXML', variable=bit, value=1)
 
     # pack widgets
     radios.pack(pady=5)
