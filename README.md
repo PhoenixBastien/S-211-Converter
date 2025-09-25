@@ -1,8 +1,8 @@
 ![App Icon](icon.ico)
 
-# S211 Converter
+# S-211 Converter
 
-This graphical app allows the user to convert S211 MARC records between XML and CSV.
+This graphical app allows the user to convert S-211 records between MARCXML and CSV.
 
 ## Setup
 
